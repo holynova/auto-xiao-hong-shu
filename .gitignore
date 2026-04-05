@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and Secrets
+.env
+xhs_cookies.json
+
+# Browser data and cache
+.browser_data/
+.cache/
+
+# Debug files
+debug_*.png
+debug_*.html
+publish_status_debug.png
+
+# Downloads and temporal folders
+slides_downloads/
+
+# macOS
+.DS_Store

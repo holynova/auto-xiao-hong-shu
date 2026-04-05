@@ -1,0 +1,20 @@
+{
+  "name": "auto-xiao-hong-shu",
+  "version": "1.0.0",
+  "main": "xhs_publisher.js",
+  "scripts": {
+    "start": "node xhs_publisher.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "playwright": "^1.42.1",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sharp": "^0.33.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
