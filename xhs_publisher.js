@@ -11,6 +11,276 @@ chromium.use(stealth);
 const USER_DATA_DIR = path.join(__dirname, '.browser_data');
 
 const readline = require('readline');
+const { Select, Input, Confirm } = require('enquirer');
+
+const STRINGS = {
+  zh: {
+    toolName: "小红书 Playwright(Node.js) 批量发布工具",
+    enterInteractive: "\n💬 进入交互式配置模式...",
+    selectMode: "请选择发布模式 (使用方向键选择):",
+    selectModeOptions: [
+        { name: "single", message: "1: [单帖模式] 文件夹内所有图片发为一个帖子" },
+        { name: "bulk", message: "2: [批量分P] 自动将图片分页发成多篇帖子" }
+    ],
+    currentDir: "\n📂 当前目录: ",
+    enterDirPath: "请输入图片文件夹路径 (直接回车呼起选择框, 或输入路径):",
+    noFolderSelected: "⚠️ 未选择文件夹，请手动输入路径。",
+    nonMacNoPicker: "❌ 非 Mac 环境无法呼起选择框，请输入文件夹路径。",
+    pathNotExist: "❌ 路径不存在: ",
+    reEnter: "\n请重新输入。",
+    imgsPerPost: "每篇帖子包含几张图片? (默认 9):",
+    enterTitle: "请输入标题 (留空则读取 meta.json 或文件夹名):",
+    enterDesc: "请输入正文描述:",
+    enableCollage: "是否开启自动拼图封面模式?",
+    taskOverview: "\n📊 任务概览: 共检测到 %d 张图片，将分为 %d 篇帖子发布。",
+    selectTimeMode: "\n⏰ 请设置发布时间方式:",
+    selectTimeOptions: [
+        { name: "immediate", message: "1: 立即发布 (Immediate)" },
+        { name: "schedule", message: "2: 定时发布 (Scheduled)" }
+    ],
+    scheduleSettings: "\n⏰ 定时发布参数配置:",
+    enterStartTime: "请输入首篇发布日期时间 (默认 %s):",
+    invalidTime: "⚠️ 时间格式非法，使用默认时间。",
+    enterInterval: "请输入发布间隔 (支持 2 或 120min 等, 默认 2h):",
+    skipNight: "是否跳过凌晨低峰时段 (23:00 - 07:00)?",
+    planPreview: "\n📋 发布计划预览:",
+    immediate: "立即发布",
+    postIndex: "[第 %s 篇]",
+    confirmPlan: "\n✅ 确认以上发布计划并开始执行?",
+    cancelled: "👋 已取消发布。",
+    startTask: "🚀 开始发布任务: %s",
+    noImgsFound: "❌ 未找到任何图片文件 (*.png, *.jpg)。跳过。",
+    workDir: "📂 工作目录: %s",
+    titleLine: "📝 标题: %s",
+    imgCount: "🖼️  图片: %d 张",
+    generatingCollage: "🎨 正在生成拼图封面 (基于前 %d 张图)...",
+    collageGenerated: "✅ 拼图封面已生成: %s",
+    collageFailed: "❌ 生成拼图失败: %s",
+    startingBrowser: "🚀 启动浏览器 (Headless: %s)...",
+    firstRunError: "❌ 这是你第一次运行，或者 Playwright Chromium 内核未找到！",
+    initHint: "👉 请先在终端运行以下命令进行环境初始化 (仅需一次)：\n   pnpm exec playwright install chromium\n",
+    detectCookies: "🍪 检测到 cookies 环境变量，正在注入...",
+    cookiesSuccess: "   Cookies 注入成功",
+    cookiesFailed: "❌ Cookies 注入失败: %s",
+    openingXHS: "\n🌐 正在打开小红书创作者中心...",
+    manualLogin: "\n⚠️  请在浏览器中手动登录小红书...",
+    autoContinue: "   登录完成后，脚本会自动继续",
+    loginSuccess: "✅ 登录成功！",
+    loginTimeout: "❌ 等待登录超时或手动打断！",
+    uploadingImgs: "\n📤 正在上传图片...",
+    noUploadBtn: "⚠️  未找到图片上传按钮，请手动上传图片\n   图片路径: %s",
+    uploadingProgress: "   上传图片 %d/%d...",
+    uploadFailed: "   图片 %d 上传失败: %s",
+    waitingImgProcess: "   等待图片处理...",
+    fillingTitle: "📝 正在填写标题...",
+    titleFillFailed: "⚠️  无法自动填写标题，请检查页面结构。",
+    fillingDesc: "📝 正在填写正文...",
+    fillingSuccess: "✅ 内容填写完成！",
+    settingSchedule: "\n⏰ 正在设置定时发布...",
+    targetTime: "   目标时间: %s%s",
+    twoHoursLater: " (两小时后)",
+    scheduleSuccess: "   时间设置成功: %s",
+    noDateInput: "   ⚠️ 无法找到日期输入框，请检查页面是否有变化",
+    noScheduleTab: "   ⚠️ 未找到定时发布选项卡",
+    scheduleError: "   ⚠️ 设置定时发布出错: %s",
+    testModeSkip: "\n🛑 当前为测试模式(--test)，跳过真正的发布点击...",
+    clickingPublish: "\n🚀 正在自动点击发布...",
+    clickingAttempt: "   点击发布按钮 (尝试 %d)...",
+    sliderDetected: "⚠️  检测到滑块验证码！尝试自动滑动...",
+    notRedirected: "   似乎未跳转，准备重试...",
+    noPublishBtn: "❌ 未找到发布按钮，请手动点击",
+    waitingSuccess: "   等待发布成功确认...",
+    redirectSuccess: "   检测到页面跳转，发布可能成功",
+    toastSuccess: "   检测到成功提示",
+    publishSuccess: "🎉 发布成功！",
+    noSuccessSignal: "⚠️  未检测到明确的发布成功信号: %s",
+    saveScreenshot: "   已保存页面截图到: %s",
+    manualCheck: "   请手动检查浏览器状态",
+    checkingStatus: "\n等待几秒查看状态...",
+    publishFailed: "\n❌ 发布失败: %s",
+    cookiesSaved: "\n🍪 Cookies 已保存到 %s\n   请复制此文件内容到 GitHub Secrets (Name: COOKIES_JSON)",
+    saveCookiesFailed: "   Cookies 保存失败: %s",
+    browserClosed: "\n👋 浏览器已关闭",
+    unnamedPost: "未命名",
+    bulkBatchTitle: "批量发布",
+    bulkBatchDesc: "这是自动批量发布的图文",
+    bulkModeEnabled: "\n📦 开启文件夹批量分P发布模式",
+    targetBulkDir: "📁 目标文件夹: %s",
+    imgsPerPostBulk: "🖼️ 每篇帖子图片数: %d",
+    unifiedTitleBulk: "📝 统一标题: %s (带序号)",
+    noImgsInDir: "❌ 文件夹中没有图片文件: %s",
+    batchSummary: "📊 共计 %d 张图片，将分为 %d 篇帖子发布。",
+    startingBatchTask: "\n▶️ 开始执行 第 %d/%d 个任务...",
+    waitingNextTask: "\n⏳ 等待 %s 秒后执行下一个任务...",
+    batchComplete: "\n🎉 批量发布完毕! 总任务: %d, 成功: %s",
+    dirNotExist: "❌ 指定的目录不存在: %s",
+    missingTitle: "❌ 必须提供 --title 参数或确保目录内有 meta.json。",
+    noImgsFoundGeneric: "❌ 未找到文件夹 %s，没有任何图片可发。",
+    invalidScheduleStart: "❌ --schedule-start 时间格式不正确，建议使用 'YYYY-MM-DD HH:mm'",
+    helpTitle: "📖 小红书 Playwright(Node.js) 自动发布工具 - 帮助",
+    helpUsage: "用法:",
+    helpCommonOptions: "常用选项:",
+    helpOptionInteractive: "进入交互模式 (无参数时的默认行为)",
+    helpOptionDir: "指定单个发布文件夹路径 (发一帖)",
+    helpOptionBulkDir: "指定批量发帖文件夹路径 (大目录自动按 chunk 分页发多帖)",
+    helpOptionChunk: "批量模式下每篇帖子的图片数量 (默认 9)",
+    helpOptionTitle: "统一标题 (Bulk 模式下自动带序号)",
+    helpOptionDesc: "统一正文内容",
+    helpOptionCollage: "开启自动拼图封面模式",
+    helpOptionSchedule: "开启定时发布",
+    helpOptionScheduleStart: "首篇发布时间 (格式: \"2026-04-05 12:00\")",
+    helpOptionScheduleInterval: "发帖间隔小时数 (默认 2)",
+    helpOptionSkipNight: "凌晨 (23:00-07:00) 自动回避并顺延",
+    helpOptionTest: "测试模式 (填写内容但不点击发布)",
+    helpOptionEnglish: "强制使用英语界面 (Force English mode)",
+    helpOptionHelp: "显示此帮助信息",
+    helpExamples: "示例:",
+    noImgFoldersFound: "ℹ️ 在 slides_downloads 下未找到任何 _images 后缀的文件夹。",
+    scannedFolders: "📂 扫描到以下图集文件夹 (按最新时间排序)：\n",
+    enterFolderIndices: "\n> 请输入要批量发布的文件夹编号 (单选 1，多选 1,3,5，连续多选 1-15): ",
+    invalidInput: "⚠️ 输入无效，请重试。",
+    tasksSelected: "\n✅ 已选择 %d 个发布任务，将按顺序逐一执行...",
+    fatalError: "💥 预料之外的致命错误:",
+  },
+  en: {
+    toolName: "Xiaohongshu Playwright(Node.js) Bulk Publishing Tool",
+    enterInteractive: "\n💬 Entering Interactive Configuration Mode...",
+    selectMode: "Please select publishing mode (Use arrow keys):",
+    selectModeOptions: [
+        { name: "single", message: "1: [Single Mode] All images in folder -> 1 Post" },
+        { name: "bulk", message: "2: [Bulk Mode] Split folder -> Multiple Posts" }
+    ],
+    currentDir: "\n📂 Current directory: ",
+    enterDirPath: "Enter image folder path (Enter for picker, or type path):",
+    noFolderSelected: "⚠️ No folder selected, please input path manually.",
+    nonMacNoPicker: "❌ Folder picker is macOS only, please input path manually.",
+    pathNotExist: "❌ Path does not exist: ",
+    reEnter: "\nPlease re-enter.",
+    imgsPerPost: "How many images per post? (default 9):",
+    enterTitle: "Enter title (Leave empty to use folder name):",
+    enterDesc: "Enter description:",
+    enableCollage: "Enable auto-generated collage for cover?",
+    taskOverview: "\n📊 Task Overview: %d images detected, will be published in %d posts.",
+    selectTimeMode: "\n⏰ Select publishing time:",
+    selectTimeOptions: [
+        { name: "immediate", message: "1: Immediate Publishing" },
+        { name: "schedule", message: "2: Scheduled Publishing" }
+    ],
+    scheduleSettings: "\n⏰ Scheduled Publishing configuration:",
+    enterStartTime: "Enter start time for the first post (default %s):",
+    invalidTime: "⚠️ Invalid time format, using default time.",
+    enterInterval: "Enter interval (e.g., '2' or '120min', default 2h):",
+    skipNight: "Skip late-night hours (23:00 - 07:00)?",
+    planPreview: "\n📋 Publishing Plan Preview:",
+    immediate: "Immediate Publishing",
+    postIndex: "[Post %s]",
+    confirmPlan: "\n✅ Confirm the above plan and start executing?",
+    cancelled: "👋 Publishing cancelled.",
+    startTask: "🚀 Starting task: %s",
+    noImgsFound: "❌ No images (*.png, *.jpg) found. Skipping.",
+    workDir: "📂 Work Directory: %s",
+    titleLine: "📝 Title: %s",
+    imgCount: "🖼️  Images: %d",
+    generatingCollage: "🎨 Generating collage cover (based on first %d images)...",
+    collageGenerated: "✅ Collage cover generated: %s",
+    collageFailed: "❌ Failed to generate collage: %s",
+    startingBrowser: "🚀 Launching browser (Headless: %s)...",
+    firstRunError: "❌ First run or Playwright Chromium not found!",
+    initHint: "👉 Please run the following command to initialize the environment (one-time only):\n   pnpm exec playwright install chromium\n",
+    detectCookies: "🍪 COOKIES_JSON detected in environment, injecting...",
+    cookiesSuccess: "   Cookies injected successfully",
+    cookiesFailed: "❌ Cookies injection failed: %s",
+    openingXHS: "\n🌐 Opening Xiaohongshu Creator Center...",
+    manualLogin: "\n⚠️  Please log in to Xiaohongshu manually in the browser...",
+    autoContinue: "   Script will continue automatically after login",
+    loginSuccess: "✅ Login successful!",
+    loginTimeout: "❌ Login timed out or interrupted!",
+    uploadingImgs: "\n📤 Uploading images...",
+    noUploadBtn: "⚠️  Upload button not found, please upload manually.\n   Paths: %s",
+    uploadingProgress: "   Uploading image %d/%d...",
+    uploadFailed: "   Image %d failed: %s",
+    waitingImgProcess: "   Waiting for images to process...",
+    fillingTitle: "📝 Filling title...",
+    titleFillFailed: "⚠️  Failed to fill title automatically, please check page structure.",
+    fillingDesc: "📝 Filling description...",
+    fillingSuccess: "✅ Content filled successfully!",
+    settingSchedule: "\n⏰ Setting scheduled publishing...",
+    targetTime: "   Target time: %s%s",
+    twoHoursLater: " (Two hours later)",
+    scheduleSuccess: "   Time set successfully: %s",
+    noDateInput: "   ⚠️ Cannot find date input field, page might have changed",
+    noScheduleTab: "   ⚠️ Cannot find scheduled publishing tab",
+    scheduleError: "   ⚠️ Error setting schedule: %s",
+    testModeSkip: "\n🛑 Test mode (--test), skipping actual publish click...",
+    clickingPublish: "\n🚀 Clicking publish automatically...",
+    clickingAttempt: "   Clicking publish button (Attempt %d)...",
+    sliderDetected: "⚠️  CAPTCHA detected! Attempting automatic slide...",
+    notRedirected: "   Not redirected, retrying...",
+    noPublishBtn: "❌ Publish button not found, please click manually",
+    waitingSuccess: "   Waiting for success confirmation...",
+    redirectSuccess: "   Redirect detected, publish might be successful",
+    toastSuccess: "   Success toast detected",
+    publishSuccess: "🎉 Published successfully!",
+    noSuccessSignal: "⚠️  No clear success signal: %s",
+    saveScreenshot: "   Screenshot saved to: %s",
+    manualCheck: "   Please check browser status manually",
+    checkingStatus: "\nWaiting a few seconds to check status...",
+    publishFailed: "\n❌ Publishing failed: %s",
+    cookiesSaved: "\n🍪 Cookies saved to %s\n   Please copy the content to GitHub Secrets (Name: COOKIES_JSON)",
+    saveCookiesFailed: "   Failed to save cookies: %s",
+    browserClosed: "\n👋 Browser closed",
+    unnamedPost: "Unnamed",
+    bulkBatchTitle: "Bulk Publishing",
+    bulkBatchDesc: "This is a post generated by the bulk publishing tool",
+    bulkModeEnabled: "\n📦 Bulk directory split mode enabled",
+    targetBulkDir: "📁 Target folder: %s",
+    imgsPerPostBulk: "🖼️ Images per post: %d",
+    unifiedTitleBulk: "📝 Unified title: %s (with index)",
+    noImgsInDir: "❌ No images found in folder: %s",
+    batchSummary: "📊 Found %d images, will be split into %d posts.",
+    startingBatchTask: "\n▶️ Starting task %d/%d...",
+    waitingNextTask: "\n⏳ Waiting %s seconds for the next task...",
+    batchComplete: "\n🎉 Bulk publishing complete! Total: %d, Success: %s",
+    dirNotExist: "❌ Directory not exist: %s",
+    missingTitle: "❌ Must provide --title or meta.json in the directory.",
+    noImgsFoundGeneric: "❌ Folder %s not found, no images to publish.",
+    invalidScheduleStart: "❌ --schedule-start format invalid, use 'YYYY-MM-DD HH:mm'",
+    helpTitle: "📖 Xiaohongshu Playwright(Node.js) Publishing Tool - Help",
+    helpUsage: "Usage:",
+    helpCommonOptions: "Common Options:",
+    helpOptionInteractive: "Enter interactive mode (default if no args)",
+    helpOptionDir: "Single post directory path",
+    helpOptionBulkDir: "Bulk post directory path (auto-split by chunk)",
+    helpOptionChunk: "Images per post in bulk mode (default 9)",
+    helpOptionTitle: "Unified title (with index in bulk mode)",
+    helpOptionDesc: "Unified description",
+    helpOptionCollage: "Enable auto-collage cover mode",
+    helpOptionSchedule: "Enable scheduled publishing",
+    helpOptionScheduleStart: "First post schedule time (format: \"2026-04-05 12:00\")",
+    helpOptionScheduleInterval: "Interval hours (default 2)",
+    helpOptionSkipNight: "Skip night (23:00-07:00) during scheduling",
+    helpOptionTest: "Test mode (fill content but don't click publish)",
+    helpOptionEnglish: "Force English interface",
+    helpOptionHelp: "Display this help message",
+    helpExamples: "Examples:",
+    noImgFoldersFound: "ℹ️ No folders with '_images' suffix found in slides_downloads.",
+    scannedFolders: "📂 Scanned the following image folders (sorted by time):\n",
+    enterFolderIndices: "\n> Please enter folder indices to publish (e.g., 1, or 1,3,5, or 1-15): ",
+    invalidInput: "⚠️ Invalid input, please try again.",
+    tasksSelected: "\n✅ Selected %d tasks, executing sequentially...",
+    fatalError: "💥 Unexpected fatal error:",
+  }
+};
+
+let CURRENT_LANG = 'en';
+
+function t(key, ...params) {
+  let str = (STRINGS[CURRENT_LANG] && STRINGS[CURRENT_LANG][key]) || (STRINGS['zh'] && STRINGS['zh'][key]) || key;
+  params.forEach(p => {
+    str = str.replace(/%[sdPd]/, p);
+  });
+  return str;
+}
 
 function askQuestion(query) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -77,7 +347,7 @@ async function generateCollage(imagePaths, targetDir) {
   if (!imagePaths || imagePaths.length === 0) return null;
 
   try {
-    console.log(`🎨 正在生成拼图封面 (基于前 ${Math.min(imagePaths.length, 9)} 张图)...`);
+    console.log(t('generatingCollage', Math.min(imagePaths.length, 9)));
     
     // 以第一张图为基准尺寸
     const firstImage = sharp(imagePaths[0]);
@@ -122,17 +392,17 @@ async function generateCollage(imagePaths, targetDir) {
     .composite(composites)
     .toFile(outputPath);
 
-    console.log(`✅ 拼图封面已生成: ${outputPath}`);
+    console.log(t('collageGenerated', outputPath));
     return outputPath;
   } catch (err) {
-    console.error(`❌ 生成拼图失败: ${err.message}`);
+    console.error(t('collageFailed', err.message));
     return null;
   }
 }
 
 async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
   console.log("==================================================");
-  console.log(`🚀 开始发布任务: ${title}`);
+  console.log(t('startTask', title));
   
   let targetDir;
   let imagePaths = [];
@@ -157,13 +427,13 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
   }
 
   if (imagePaths.length === 0) {
-    console.log(`❌ 未找到任何图片文件 (*.png, *.jpg)。跳过。`);
+    console.log(t('noImgsFound'));
     return false;
   }
 
-  console.log(`📂 工作目录: ${targetDir}`);
-  console.log(`📝 标题: ${title}`);
-  console.log(`🖼️  图片: ${imagePaths.length} 张`);
+  console.log(t('workDir', targetDir));
+  console.log(t('titleLine', title));
+  console.log(t('imgCount', imagePaths.length));
   console.log("==================================================");
 
   if (options.collage) {
@@ -176,7 +446,7 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
   const isGithubActions = process.env.GITHUB_ACTIONS === "true";
   const headlessMode = isGithubActions;
 
-  console.log(`🚀 启动浏览器 (Headless: ${headlessMode})...`);
+  console.log(t('startingBrowser', headlessMode));
 
   if (!fs.existsSync(USER_DATA_DIR)) {
     fs.mkdirSync(USER_DATA_DIR, { recursive: true });
@@ -184,9 +454,8 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
 
   const executablePath = chromium.executablePath();
   if (!fs.existsSync(executablePath)) {
-    console.log("❌ 这是你第一次运行，或者 Playwright Chromium 内核未找到！");
-    console.log("👉 请先在终端运行以下命令进行环境初始化 (仅需一次)：");
-    console.log("   pnpm exec playwright install chromium\n");
+    console.log(t('firstRunError'));
+    console.log(t('initHint'));
     return;
   }
 
@@ -202,39 +471,39 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
   const cookiesJson = process.env.COOKIES_JSON;
   if (cookiesJson) {
     try {
-      console.log("🍪 检测到 cookies 环境变量，正在注入...");
+      console.log(t('detectCookies'));
       const cookies = JSON.parse(cookiesJson);
       await browserCtx.addCookies(cookies);
-      console.log("   Cookies 注入成功");
+      console.log(t('cookiesSuccess'));
     } catch (e) {
-      console.log(`❌ Cookies 注入失败: ${e.message}`);
+      console.log(t('cookiesFailed', e.message));
     }
   }
 
   try {
-    console.log("\n🌐 正在打开小红书创作者中心...");
+    console.log(t('openingXHS'));
     await page.goto("https://creator.xiaohongshu.com/publish/publish?from=menu&target=image", { waitUntil: "networkidle", timeout: 60000 });
 
     const currentUrl = page.url().toLowerCase();
     const loginTextCount = await page.locator("text=登录").count();
 
     if (currentUrl.includes("login") || loginTextCount > 0) {
-      console.log("\n⚠️  请在浏览器中手动登录小红书...");
-      console.log("   登录完成后，脚本会自动继续");
+      console.log(t('manualLogin'));
+      console.log(t('autoContinue'));
 
       await randomWait(page, 1500, 3000);
       try {
         await page.waitForURL("**/publish/**", { timeout: 300000 });
-        console.log("✅ 登录成功！");
+        console.log(t('loginSuccess'));
       } catch (err) {
-        console.log("❌ 等待登录超时或手动打断！");
+        console.log(t('loginTimeout'));
         throw err;
       }
     }
 
     await randomWait(page, 1500, 3000);
 
-    console.log("\n📤 正在上传图片...");
+    console.log(t('uploadingImgs'));
 
     try {
       const imageTab = page.locator('text=发布图文, text=图文, [class*="image"]').first();
@@ -268,24 +537,23 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
     }
 
     if (!imageInput) {
-      console.log("⚠️  未找到图片上传按钮，请手动上传图片");
-      console.log(`   图片路径: ${imagePaths.join(", ")}`);
+      console.log(t('noUploadBtn', imagePaths.join(", ")));
     } else {
       for (let i = 0; i < imagePaths.length; i++) {
         try {
-          console.log(`   上传图片 ${i + 1}/${imagePaths.length}...`);
+          console.log(t('uploadingProgress', i + 1, imagePaths.length));
           await imageInput.setInputFiles(imagePaths[i]);
           await randomWait(page, 1500, 3000);
         } catch (e) {
-          console.log(`   图片 ${i + 1} 上传失败: ${e.message}`);
+          console.log(t('uploadFailed', i + 1, e.message));
         }
       }
     }
 
-    console.log("   等待图片处理...");
+    console.log(t('waitingImgProcess'));
     await randomWait(page, 4000, 6000);
 
-    console.log("📝 正在填写标题...");
+    console.log(t('fillingTitle'));
     const titleSelectors = [
       '[placeholder*="填写标题会有更多赞哦"]',
       '[placeholder*="填写标题"]',
@@ -313,10 +581,10 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
     }
 
     if (!titleFilled) {
-      console.log("⚠️  无法自动填写标题，请检查页面结构。");
+      console.log(t('titleFillFailed'));
     }
 
-    console.log("📝 正在填写正文...");
+    console.log(t('fillingDesc'));
     
     // 正文输入框选择器
     const descSelectors = [
@@ -343,10 +611,10 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
       }
     }
 
-    console.log("✅ 内容填写完成！");
+    console.log(t('fillingSuccess'));
 
     if (options.schedule || options.scheduleTime) {
-      console.log("\n⏰ 正在设置定时发布...");
+      console.log(t('settingSchedule'));
       try {
         let future;
         if (options.scheduleTime) {
@@ -361,9 +629,9 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
         const min = String(future.getMinutes()).padStart(2, '0');
         const timeStr = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
         
-        console.log(`   目标时间: ${timeStr}${options.scheduleTime ? '' : ' (两小时后)'}`);
+        console.log(t('targetTime', timeStr, options.scheduleTime ? '' : t('twoHoursLater')));
         
-        const scheduleContainer = page.locator('.custom-switch-card').filter({ hasText: /^定时发布$/ }).first();
+        const scheduleContainer = page.locator('.custom-switch-card').filter({ hasText: CURRENT_LANG === 'zh' ? /^定时发布$/ : /^Scheduled publishing$/ }).first();
         if (await scheduleContainer.count() > 0) {
             const switchBtn = scheduleContainer.locator('.d-switch').first();
             const isChecked = await scheduleContainer.locator('input[type="checkbox"]').evaluate(n => n.checked).catch(() => false);
@@ -396,33 +664,33 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
                 // 点击空白处收起日历框
                 await page.mouse.click(10, 10);
                 await randomWait(page, 1000, 2000);
-                console.log(`   时间设置成功: ${timeStr}`);
+                console.log(t('scheduleSuccess', timeStr));
             } else {
-                console.log("   ⚠️ 无法找到日期输入框，请检查页面是否有变化");
+                console.log(t('noDateInput'));
                 await page.screenshot({ path: path.join(targetDir, "debug_schedule.png") });
                 const dbg = await page.evaluate(() => document.body.innerHTML);
                 try { require('fs').writeFileSync(path.join(targetDir, "debug_schedule.html"), dbg); } catch(e){}
             }
         } else {
-            console.log("   ⚠️ 未找到定时发布选项卡");
+            console.log(t('noScheduleTab'));
         }
       } catch (e) {
-         console.log(`   ⚠️ 设置定时发布出错: ${e.message}`);
+         console.log(t('scheduleError', e.message));
       }
     }
 
     if (options.test) {
-      console.log("\n🛑 当前为测试模式(--test)，跳过真正的发布点击...");
+      console.log(t('testModeSkip'));
       await randomWait(page, 4000, 6000);
       return true;
     }
 
-    console.log("\n🚀 正在自动点击发布...");
-    const submitBtn = page.locator('button.submit, button:has-text("发布"), .publish-btn').first();
+    console.log(t('clickingPublish'));
+    const submitBtn = page.locator('button.submit, button:has-text("' + (CURRENT_LANG === 'zh' ? "发布" : "Publish") + '"), .publish-btn').first();
 
     if ((await submitBtn.count()) > 0) {
       for (let attempt = 0; attempt < 3; attempt++) {
-        console.log(`   点击发布按钮 (尝试 ${attempt + 1})...`);
+        console.log(t('clickingAttempt', attempt + 1));
         try {
           await submitBtn.click({ timeout: 2000 });
         } catch (e) {
@@ -433,7 +701,7 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
 
         const slider = page.locator('.nc_scale, .slider-container, #nc_1_n1z').first();
         if ((await slider.count()) > 0 && await slider.isVisible()) {
-          console.log("⚠️  检测到滑块验证码！尝试自动滑动...");
+          console.log(t('sliderDetected'));
           const sliderHandle = page.locator('#nc_1_n1z, .nc_iconfont.btn_slide').first();
           if ((await sliderHandle.count()) > 0) {
             const box = await sliderHandle.boundingBox();
@@ -458,29 +726,29 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
           break;
         }
 
-        console.log("   似乎未跳转，准备重试...");
+        console.log(t('notRedirected'));
         await randomWait(page, 1500, 3000);
       }
     } else {
-      console.log("❌ 未找到发布按钮，请手动点击");
+      console.log(t('noPublishBtn'));
     }
 
     try {
-      console.log("   等待发布成功确认...");
+      console.log(t('waitingSuccess'));
       const startTime = Date.now();
       let success = false;
       while (Date.now() - startTime < 15000) {
         const curUrl = page.url();
         if (curUrl.includes("manage") || curUrl.includes("success")) {
-          console.log("   检测到页面跳转，发布可能成功");
+          console.log(t('redirectSuccess'));
           success = true;
           break;
         }
 
-        if ((await page.locator('text=发布成功').count()) > 0 || 
-            (await page.locator('text=已发布').count()) > 0 || 
+        if ((await page.locator('text=' + (CURRENT_LANG === 'zh' ? '发布成功' : 'Published successfully')).count()) > 0 || 
+            (await page.locator('text=' + (CURRENT_LANG === 'zh' ? '已发布' : 'Published')).count()) > 0 || 
             (await page.locator('div[class*="success"]').count()) > 0) {
-          console.log("   检测到成功提示");
+          console.log(t('toastSuccess'));
           success = true;
           break;
         }
@@ -489,20 +757,20 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
       }
 
       if (success) {
-        console.log("🎉 发布成功！");
+        console.log(t('publishSuccess'));
       } else {
         throw new Error("Timeout waiting for success signal");
       }
     } catch (err) {
-      console.log(`⚠️  未检测到明确的发布成功信号: ${err.message}`);
+      console.log(t('noSuccessSignal', err.message));
       const screenshotPath = path.join(targetDir, "publish_status_debug.png");
       await page.screenshot({ path: screenshotPath });
-      console.log(`   已保存页面截图到: ${screenshotPath}`);
-      console.log("   请手动检查浏览器状态");
+      console.log(t('saveScreenshot', screenshotPath));
+      console.log(t('manualCheck'));
     }
 
-    if ((await page.locator('text=发布成功').count()) === 0) {
-      console.log("\n等待几秒查看状态...");
+    if ((await page.locator('text=' + (CURRENT_LANG === 'zh' ? '发布成功' : 'Published successfully')).count()) === 0) {
+      console.log(t('checkingStatus'));
       await randomWait(page, 4000, 6000);
     } else {
       await randomWait(page, 2000, 4000);
@@ -511,7 +779,7 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
     return true;
 
   } catch (err) {
-    console.log(`\n❌ 发布失败: ${err.message}`);
+    console.log(t('publishFailed', err.message));
     if (!isGithubActions) {
       await randomWait(page, 4000, 6000);
     }
@@ -519,17 +787,20 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
   } finally {
     if (!isGithubActions) {
       try {
-        const cookies = await browserCtx.cookies();
-        fs.writeFileSync("xhs_cookies.json", JSON.stringify(cookies, null, 2), "utf8");
-        console.log(`\n🍪 Cookies 已保存到 ${path.resolve("xhs_cookies.json")}`);
-        console.log("   请复制此文件内容到 GitHub Secrets (Name: COOKIES_JSON)");
+        const cookies = await browserCtx.cookies().catch(() => []);
+        if (cookies && cookies.length > 0) {
+          fs.writeFileSync("xhs_cookies.json", JSON.stringify(cookies, null, 2), "utf8");
+          console.log(t('cookiesSaved', path.resolve("xhs_cookies.json")));
+        }
       } catch (err) {
-        console.log(`   Cookies 保存失败: ${err.message}`);
+        console.log(t('saveCookiesFailed', err.message));
       }
     }
 
-    await browserCtx.close();
-    console.log("\n👋 浏览器已关闭");
+    try {
+      if (browserCtx) await browserCtx.close().catch(() => {});
+      console.log(t('browserClosed'));
+    } catch (e) {}
   }
 }
 
@@ -537,7 +808,18 @@ async function publishTask(workDirOrImagePaths, title, descText, options = {}) {
  * 交互式配置模式
  */
 async function interactiveMode() {
-  console.log("\n💬 进入交互式配置模式...");
+  const langPrompt = new Select({
+    name: 'lang',
+    message: 'Language / 语言 (Use arrow keys):',
+    choices: [
+      { name: 'en', message: '1: English' },
+      { name: 'zh', message: '2: 中文' }
+    ],
+    initial: 0
+  });
+  CURRENT_LANG = await langPrompt.run();
+
+  console.log(t('enterInteractive'));
   const config = {};
 
   /**
@@ -546,7 +828,8 @@ async function interactiveMode() {
   async function chooseFolderMac() {
     if (process.platform !== 'darwin') return null;
     try {
-      const cmd = `osascript -e 'POSIX path of (choose folder with prompt "请选择包含图片的文件夹")'`;
+      const prompt = CURRENT_LANG === 'zh' ? "请选择包含图片的文件夹" : "Please select the folder containing images";
+      const cmd = `osascript -e 'POSIX path of (choose folder with prompt "${prompt}")'`;
       const result = execSync(cmd).toString().trim();
       return result;
     } catch (e) {
@@ -554,14 +837,23 @@ async function interactiveMode() {
     }
   }
 
-  const mode = await askQuestion("请选择发布模式 [1: 文件夹中所有图片, 发一个帖子; 2: 按照图片拆分成多个帖子发送] (默认1): ");
-  config.mode = (mode === "2") ? "bulk" : "single";
+  const modePrompt = new Select({
+    name: 'mode',
+    message: t('selectMode'),
+    choices: t('selectModeOptions')
+  });
+  config.mode = await modePrompt.run();
 
   let dirPath = "";
   while (!dirPath) {
     const currentDir = process.cwd();
-    console.log(`\n📂 当前目录: ${currentDir}`);
-    const inputPath = await askQuestion("请输入图片文件夹路径 (直接回车 呼起文件夹选择框, 或输入 ./images 等): ");
+    console.log(t('currentDir') + currentDir);
+    
+    const dirInput = new Input({
+        name: 'dir',
+        message: t('enterDirPath')
+    });
+    const inputPath = await dirInput.run();
     
     if (!inputPath) {
       if (process.platform === 'darwin') {
@@ -569,32 +861,49 @@ async function interactiveMode() {
         if (chosen) {
           dirPath = chosen;
         } else {
-          console.log("⚠️ 未选择文件夹，请手动输入路径。");
+          console.log(t('noFolderSelected'));
         }
       } else {
-        console.log("❌ 非 Mac 环境无法呼起选择框，请输入文件夹路径。");
+        console.log(t('nonMacNoPicker'));
       }
     } else {
       const resolved = path.resolve(currentDir, inputPath);
       if (fs.existsSync(resolved)) {
         dirPath = resolved;
       } else {
-        console.log(`❌ 路径不存在: ${resolved}\n请重新输入。`);
+        console.log(t('pathNotExist') + resolved + t('reEnter'));
       }
     }
   }
   config.dir = dirPath;
 
   if (config.mode === "bulk") {
-    const chunkInput = await askQuestion("每篇帖子包含几张图片? (默认9): ");
-    config.chunk = parseInt(chunkInput, 10) || 9;
+    const chunkInput = new Input({
+        name: 'chunk',
+        message: t('imgsPerPost'),
+        initial: '9'
+    });
+    config.chunk = parseInt(await chunkInput.run(), 10) || 9;
   }
 
-  config.title = await askQuestion("请输入标题 (留空则尝试读取 meta.json 或文件夹名): ");
-  config.desc = await askQuestion("请输入正文描述: ");
+  const titleInput = new Input({
+      name: 'title',
+      message: t('enterTitle')
+  });
+  config.title = await titleInput.run();
 
-  const collageInput = await askQuestion("是否开启自动拼图封面? (y/n, 默认n): ");
-  config.collage = collageInput.toLowerCase() === "y";
+  const descInput = new Input({
+      name: 'desc',
+      message: t('enterDesc')
+  });
+  config.desc = await descInput.run();
+
+  const collageConfirm = new Confirm({
+      name: 'collage',
+      message: t('enableCollage'),
+      initial: false
+  });
+  config.collage = await collageConfirm.run();
 
   // 计算帖子概览
   let totalPosts = 1;
@@ -605,29 +914,54 @@ async function interactiveMode() {
     totalPosts = Math.ceil(imgFiles.length / config.chunk);
   }
 
-  console.log(`\n📊 任务概览: 共检测到 ${imgFiles.length} 张图片，将分为 ${totalPosts} 篇帖子发布。`);
+  console.log(t('taskOverview', imgFiles.length, totalPosts));
 
   // 发布时间设置
-  const timeMode = await askQuestion("\n⏰ 请选择发布时间 [1: 立即发布, 2: 定时发布] (默认2): ");
-  config.schedule = (timeMode !== "1");
+  const timeModePrompt = new Select({
+      name: 'timeMode',
+      message: t('selectTimeMode'),
+      choices: t('selectTimeOptions'),
+      initial: 1
+  });
+  const timeMode = await timeModePrompt.run();
+  config.schedule = (timeMode === "schedule");
 
   if (config.schedule) {
-    console.log("\n⏰ 定时发布设置:");
+    console.log(t('scheduleSettings'));
     const defaultStartTime = new Date(Date.now() + 30 * 60 * 1000);
     const defaultStartTimeStr = `${defaultStartTime.getFullYear()}-${String(defaultStartTime.getMonth() + 1).padStart(2, '0')}-${String(defaultStartTime.getDate()).padStart(2, '0')} ${String(defaultStartTime.getHours()).padStart(2, '0')}:${String(defaultStartTime.getMinutes()).padStart(2, '0')}`;
     
-    const startTimeStr = await askQuestion(`请输入首篇发布时间 (默认 ${defaultStartTimeStr}): `);
+    const startTimeInput = new Input({
+        name: 'startTime',
+        message: t('enterStartTime', defaultStartTimeStr),
+        initial: defaultStartTimeStr
+    });
+    const startTimeStr = await startTimeInput.run();
     config.scheduleStart = startTimeStr ? new Date(startTimeStr).getTime() : defaultStartTime.getTime();
     if (isNaN(config.scheduleStart)) {
-        console.log("⚠️ 时间格式非法，使用默认时间。");
+        console.log(t('invalidTime'));
         config.scheduleStart = defaultStartTime.getTime();
     }
 
-    const intervalInput = await askQuestion("请输入发布间隔小时数 (默认 2): ");
-    config.interval = parseFloat(intervalInput) || 2;
+    const intervalInput = new Input({
+        name: 'interval',
+        message: t('enterInterval'),
+        initial: '2'
+    });
+    const intervalStr = await intervalInput.run();
+    // 支持解析 '120min' 或数字
+    if (intervalStr.toLowerCase().endsWith('min')) {
+        config.interval = parseFloat(intervalStr) / 60;
+    } else {
+        config.interval = parseFloat(intervalStr) || 2;
+    }
 
-    const skipNightInput = await askQuestion("是否跳过凌晨 (23:00-07:00)? (y/n, 默认y): ");
-    config.skipNight = skipNightInput.toLowerCase() !== "n";
+    const skipNightConfirm = new Confirm({
+        name: 'skipNight',
+        message: t('skipNight'),
+        initial: true
+    });
+    config.skipNight = await skipNightConfirm.run();
   } else {
     config.scheduleStart = null;
     config.interval = 0;
@@ -635,25 +969,30 @@ async function interactiveMode() {
   }
 
   // 生成预览
-  console.log("\n📋 发布计划预览:");
+  console.log(t('planPreview'));
   console.log("--------------------------------------------------");
   const plan = [];
   for (let i = 0; i < totalPosts; i++) {
-      let pTimeStr = "立即发布";
+      let pTimeStr = t('immediate');
       let pTime = null;
       if (config.schedule) {
           pTime = calculateNextScheduleTime(config.scheduleStart, i, config.interval, config.skipNight);
-          pTimeStr = new Date(pTime).toLocaleString('zh-CN', { hour12: false });
+          pTimeStr = new Date(pTime).toLocaleString(CURRENT_LANG === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
       }
-      const pTitle = config.mode === "bulk" ? `${config.title || "未命名"} (${i + 1})` : (config.title || "未命名");
-      console.log(`[第 ${String(i + 1).padStart(2, '0')} 篇] ${pTimeStr} | ${pTitle}`);
+      const pTitle = config.mode === "bulk" ? `${config.title || t('unnamedPost')} (${i + 1})` : (config.title || t('unnamedPost'));
+      console.log(`${t('postIndex', String(i + 1).padStart(2, '0'))} ${pTimeStr} | ${pTitle}`);
       plan.push({ time: pTime, title: pTitle });
   }
   console.log("--------------------------------------------------");
 
-  const confirm = await askQuestion("\n✅ 确认以上发布计划并开始执行? (y/n, 默认y): ");
-  if (confirm.toLowerCase() === "n") {
-    console.log("👋 已取消发布。");
+  const confirmPrompt = new Confirm({
+      name: 'confirm',
+      message: t('confirmPlan'),
+      initial: true
+  });
+  const isConfirmed = await confirmPrompt.run();
+  if (!isConfirmed) {
+    console.log(t('cancelled'));
     process.exit(0);
   }
 
@@ -683,41 +1022,50 @@ async function interactiveMode() {
  */
 function showHelp() {
   console.log(`
-📖 小红书 Playwright(Node.js) 自动发布工具 - 帮助
+${t('helpTitle')}
 --------------------------------------------------
 
-用法:
-  pnpm start [选项]
-  node xhs_publisher.js [选项]
+${t('helpUsage')}
+  pnpm start [${t('helpCommonOptions').split(':')[0]}]
+  node xhs_publisher.js [${t('helpCommonOptions').split(':')[0]}]
 
-常用选项:
-  -i, --interactive           进入交互模式 (无参数时的默认行为)
-  --dir <path>                指定单个发布文件夹路径 (发一帖)
-  --bulk-dir <path>           指定批量发帖文件夹路径 (大目录自动按 chunk 分页发多帖)
-  --chunk <num>               批量模式下每篇帖子的图片数量 (默认 9)
-  --title <text>              统一标题 (Bulk 模式下自动带序号)
-  --desc <text>               统一正文内容
-  --collage                   开启自动拼图封面模式
-  --schedule                  开启定时发布
-  --schedule-start <time>     首篇发布时间 (格式: "2026-04-05 12:00")
-  --schedule-interval <hr>    发帖间隔小时数 (默认 2)
-  --skip-night                凌晨 (23:00-07:00) 自动回避并顺延
-  --test                      测试模式 (填写内容但不点击发布)
-  -h, --help                  显示此帮助信息
+${t('helpCommonOptions')}
+  -i, --interactive           ${t('helpOptionInteractive')}
+  --dir <path>                ${t('helpOptionDir')}
+  --bulk-dir <path>           ${t('helpOptionBulkDir')}
+  --chunk <num>               ${t('helpOptionChunk')}
+  --title <text>              ${t('helpOptionTitle')}
+  --desc <text>               ${t('helpOptionDesc')}
+  --collage                   ${t('helpOptionCollage')}
+  --schedule                  ${t('helpOptionSchedule')}
+  --schedule-start <time>     ${t('helpOptionScheduleStart')}
+  --schedule-interval <hr>    ${t('helpOptionScheduleInterval')}
+  --skip-night                ${t('helpOptionSkipNight')}
+  --test                      ${t('helpOptionTest')}
+  --english                   ${t('helpOptionEnglish')}
+  -h, --help                  ${t('helpOptionHelp')}
 
-示例:
-  node xhs_publisher.js --bulk-dir ./imgs --chunk 9 --title "每日穿搭"
+${t('helpExamples')}
+  node xhs_publisher.js --bulk-dir ./imgs --chunk 9 --title "Daily OUTFIT"
   node xhs_publisher.js --dir ./my_trip --collage --test
   `);
   process.exit(0);
 }
 
 async function runBatch() {
+  const args = process.argv.slice(2);
+  
+  // 默认英语
+  CURRENT_LANG = 'en';
+
+  if (args.includes('--english') || args.includes('English')) {
+    CURRENT_LANG = 'en';
+  }
+
   console.log("==================================================");
-  console.log("小红书 Playwright(Node.js) 批量发布工具");
+  console.log(t('toolName'));
   console.log("==================================================");
 
-  const args = process.argv.slice(2);
   let argv = {};
 
   // 检查帮助命令
@@ -754,7 +1102,7 @@ async function runBatch() {
   if (argv['schedule-start']) {
       scheduleStartTimestamp = new Date(argv['schedule-start']).getTime();
       if (isNaN(scheduleStartTimestamp)) {
-          console.log("❌ --schedule-start 时间格式不正确，建议使用 'YYYY-MM-DD HH:mm'");
+          console.log(t('invalidScheduleStart'));
           return;
       }
   }
@@ -762,17 +1110,17 @@ async function runBatch() {
   if (argv['bulk-dir']) {
     const bulkDir = path.resolve(process.cwd(), argv['bulk-dir']);
     if (!fs.existsSync(bulkDir)) {
-      console.log(`❌ 指定的批量文件夹不存在: ${bulkDir}`);
+      console.log(t('dirNotExist', bulkDir));
       return;
     }
     const chunk = parseInt(argv.chunk, 10) || 9; // 默认9张图片一篇帖子
-    const title = argv.title || "批量发布";
-    const desc = argv.desc || "这是自动批量发布的图文";
+    const title = argv.title || t('bulkBatchTitle');
+    const desc = argv.desc || t('bulkBatchDesc');
 
-    console.log(`\n📦 开启文件夹批量分P发布模式`);
-    console.log(`📁 目标文件夹: ${bulkDir}`);
-    console.log(`🖼️ 每篇帖子图片数: ${chunk}`);
-    console.log(`📝 统一标题: ${title} (带序号)`);
+    console.log(t('bulkModeEnabled'));
+    console.log(t('targetBulkDir', bulkDir));
+    console.log(t('imgsPerPostBulk', chunk));
+    console.log(t('unifiedTitleBulk', title));
 
     const files = fs.readdirSync(bulkDir);
     const imgFiles = files.filter(f => /\.(png|jpe?g)$/i.test(f)).sort((a, b) => {
@@ -782,18 +1130,18 @@ async function runBatch() {
     }).map(f => path.resolve(bulkDir, f));
 
     if (imgFiles.length === 0) {
-      console.log(`❌ 文件夹中没有图片文件: ${bulkDir}`);
+      console.log(t('noImgsInDir', bulkDir));
       return;
     }
 
     const totalPosts = Math.ceil(imgFiles.length / chunk);
-    console.log(`📊 共计 ${imgFiles.length} 张图片，将分为 ${totalPosts} 篇帖子发布。`);
+    console.log(t('batchSummary', imgFiles.length, totalPosts));
 
     let successCount = 0;
     for (let i = 0; i < totalPosts; i++) {
       const chunkPaths = imgFiles.slice(i * chunk, (i + 1) * chunk);
       const postTitle = `${title} (${i + 1})`;
-      console.log(`\n▶️ 开始执行 第 ${i + 1}/${totalPosts} 个任务...`);
+      console.log(t('startingBatchTask', i + 1, totalPosts));
       let taskOptions = { schedule: !!argv.schedule, test: !!argv.test, collage: !!argv.collage };
       if (scheduleStartTimestamp) {
         taskOptions.scheduleTime = calculateNextScheduleTime(scheduleStartTimestamp, i, scheduleIntervalHours, skipNight);
@@ -804,18 +1152,18 @@ async function runBatch() {
 
       if (i < totalPosts - 1) {
         const delayMs = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
-        console.log(`\n⏳ 等待 ${(delayMs / 1000).toFixed(1)} 秒后执行下一个任务...`);
+        console.log(t('waitingNextTask', (delayMs / 1000).toFixed(1)));
         await new Promise(r => setTimeout(r, delayMs));
       }
     }
-    console.log(`\n🎉 批量发布完毕! 总任务: ${totalPosts}, 成功: ${successCount}`);
+    console.log(t('batchComplete', totalPosts, successCount));
     return;
   }
 
   if (argv.dir) {
     const workDir = path.resolve(process.cwd(), argv.dir);
     if (!fs.existsSync(workDir)) {
-      console.log(`❌ 指定的目录不存在: ${workDir}`);
+      console.log(t('dirNotExist', workDir));
       return;
     }
     let title = argv.title || "";
@@ -831,7 +1179,7 @@ async function runBatch() {
     }
 
     if (!title) {
-      console.log("❌ 必须提供 --title 参数或确保目录内有 meta.json。");
+      console.log(t('missingTitle'));
       return;
     }
 
@@ -846,7 +1194,7 @@ async function runBatch() {
 
   const downloadsDir = path.join(__dirname, 'slides_downloads');
   if (!fs.existsSync(downloadsDir)) {
-    console.error(`❌ 未找到文件夹 ${downloadsDir}，没有任何图片可发。`);
+    console.error(t('noImgsFoundGeneric', downloadsDir));
     process.exit(1);
   }
 
@@ -864,22 +1212,22 @@ async function runBatch() {
     process.exit(0);
   }
 
-  console.log('📂 扫描到以下图集文件夹 (按最新时间排序)：\n');
+    console.log(t('scannedFolders'));
   folders.forEach((folder, index) => {
     console.log(`  [${index + 1}] ${folder}`);
   });
 
   let selectedIndices = [];
   while (true) {
-    const ans = await askQuestion('\n> 请输入要批量发布的文件夹编号 (单选 1，多选 1,3,5，连续多选 1-15): ');
+    const ans = await askQuestion(t('enterFolderIndices'));
     selectedIndices = parseIndices(ans, folders.length);
     if (selectedIndices.length > 0) {
       break;
     }
-    console.log('⚠️ 输入无效，请重试。');
+    console.log(t('invalidInput'));
   }
 
-  console.log(`\n✅ 已选择 ${selectedIndices.length} 个发布任务，将按顺序逐一执行...`);
+  console.log(t('tasksSelected', selectedIndices.length));
   
   let successCount = 0;
   for (let i = 0; i < selectedIndices.length; i++) {
@@ -891,7 +1239,7 @@ async function runBatch() {
     const title = rawTitle.substring(0, 20);
     const desc = rawTitle;
 
-    console.log(`\n▶️ 开始执行 第 ${i + 1}/${selectedIndices.length} 个任务...`);
+    console.log(t('startingBatchTask', i + 1, selectedIndices.length));
     let taskOptions = { schedule: !!argv.schedule, test: !!argv.test, collage: !!argv.collage };
     if (scheduleStartTimestamp) {
       taskOptions.scheduleTime = calculateNextScheduleTime(scheduleStartTimestamp, i, scheduleIntervalHours, skipNight);
@@ -902,15 +1250,15 @@ async function runBatch() {
     
     if (i < selectedIndices.length - 1) {
       const delayMs = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
-      console.log(`\n⏳ 等待 ${(delayMs / 1000).toFixed(1)} 秒后执行下一个任务...`);
+      console.log(t('waitingNextTask', (delayMs / 1000).toFixed(1)));
       await new Promise(r => setTimeout(r, delayMs));
     }
   }
 
-  console.log(`\n🎉 批量发布完毕! 总任务: ${selectedIndices.length}, 成功: ${successCount}`);
+  console.log(t('batchComplete', selectedIndices.length, successCount));
 }
 
 runBatch().catch(err => {
-  console.error("💥 预料之外的致命错误:", err);
+  console.error(t('fatalError'), err);
   process.exit(1);
 });
