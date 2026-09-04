@@ -1,5 +1,7 @@
 # 🚀 Auto XHS Publisher (小红书自动发布工具)
 
+项目介绍页：[auto-xiao-hong-shu.xiaosang.cc](https://auto-xiao-hong-shu.xiaosang.cc/)。云端页面仅发布静态文档；浏览器自动化与登录态仍在本地执行。
+
 [English](#english) | [中文](#chinese)
 
 ---

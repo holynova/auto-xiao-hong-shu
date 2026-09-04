@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Auto XHS Publisher：面向小红书图文素材的本地批量整理与发布辅助工具。" />
+    <title>Auto XHS Publisher</title>
+    <style>
+      :root { color-scheme: dark; --bg: #140d13; --panel: #261722; --text: #fff4fb; --muted: #d0b9c8; --accent: #ff6fae; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 85% 10%, #65204a, transparent 36%), var(--bg); color: var(--text); font: 16px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 72px 0; }
+      .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+      h1 { max-width: 760px; margin: 12px 0; font-size: clamp(2.4rem, 7vw, 5rem); line-height: 1.02; letter-spacing: -.05em; }
+      .lead { max-width: 720px; color: var(--muted); font-size: 1.2rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 52px; }
+      a { color: inherit; }
+      .button { display: inline-block; padding: 10px 16px; border: 1px solid #70405a; border-radius: 999px; text-decoration: none; }
+      .button.primary { border-color: var(--accent); background: var(--accent); color: #2a0b1b; font-weight: 700; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+      article { padding: 20px; border: 1px solid #4b2d41; border-radius: 18px; background: color-mix(in srgb, var(--panel) 90%, transparent); }
+      h2 { margin: 0 0 8px; font-size: 1.1rem; }
+      article p { margin: 0; color: var(--muted); }
+      footer { margin-top: 52px; color: var(--muted); font-size: .9rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Auto XHS Publisher · local creator assistant</div>
+      <h1>让一组图片，变成一套有节奏的图文发布任务。</h1>
+      <p class="lead">一个基于 Playwright 的本地小红书创作者助手：支持单帖、批量拆分、定时排队和九宫格封面生成。</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/holynova/auto-xiao-hong-shu">查看源代码</a>
+        <a class="button" href="https://github.com/holynova/auto-xiao-hong-shu#中文">使用说明</a>
+      </div>
+      <section class="grid" aria-label="Features">
+        <article><h2>单帖与批量</h2><p>把目录作为一篇发布，或按数量拆成多篇任务。</p></article>
+        <article><h2>定时发布</h2><p>设置开始时间与间隔，并避开配置的夜间时段。</p></article>
+        <article><h2>自动封面</h2><p>使用本地图片生成九宫格拼图封面。</p></article>
+        <article><h2>人工确认边界</h2><p>登录、验证码和平台协议由操作者在本地浏览器中确认。</p></article>
+      </section>
+      <footer>云端页面仅是项目介绍与文档入口；浏览器自动化、登录态、Cookie 与素材处理均在本地执行，请遵守平台规则。</footer>
+    </main>
+  </body>
+</html>
