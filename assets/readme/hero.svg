@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="360" viewBox="0 0 1200 360"
+     role="img" aria-labelledby="title desc">
+  <title id="title">Auto XHS Publisher — 小红书自动发布工具</title>
+  <desc id="desc">深紫红底标题：Auto XHS Publisher，批量发帖、定时排期、拼图封面；右侧是四步流水线：图片文件夹 → 拼图封面 → 定时排期 → 发布。</desc>
+
+  <rect width="1200" height="360" rx="26" fill="#1c0f18"/>
+
+  <g id="title-block" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="56" y="62" font-size="19" letter-spacing="3" fill="#d0b9c8">XIAOHONGSHU AUTO PUBLISHER · 小红书自动发布</text>
+    <text x="56" y="128" font-size="54" font-weight="700" fill="#fff4fb">Auto XHS Publisher</text>
+    <text x="56" y="168" font-size="23" fill="#ff6fae">批量发帖、定时排期、拼图封面，一条命令搞定</text>
+    <text x="56" y="204" font-size="19" fill="#d0b9c8">Playwright + Stealth 驱动创作者中心，扫码一次后免密发布。</text>
+    <g id="chips" font-size="18" fill="#fff4fb" text-anchor="middle">
+      <g><rect x="56" y="238" width="144" height="36" rx="18" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/><text x="128" y="262">单帖 / 批量分P</text></g>
+      <g><rect x="212" y="238" width="126" height="36" rx="18" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/><text x="275" y="262">定时发布</text></g>
+      <g><rect x="350" y="238" width="126" height="36" rx="18" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/><text x="413" y="262">拼图封面</text></g>
+      <g><rect x="488" y="238" width="162" height="36" rx="18" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/><text x="569" y="262">Stealth 反检测</text></g>
+    </g>
+  </g>
+
+  <g id="pipeline" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="740" y="46" font-size="18" fill="#d0b9c8">一条命令的流水线</text>
+    <g id="step-folder">
+      <rect x="740" y="62" width="88" height="88" rx="12" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/>
+      <g>
+        <rect x="762" y="86" width="44" height="32" rx="4" fill="#ff6fae" opacity="0.85"/>
+        <rect x="762" y="80" width="20" height="10" rx="3" fill="#ff6fae" opacity="0.85"/>
+        <circle cx="796" cy="100" r="5" fill="#1c0f18"/>
+        <path d="M766 114 L782 100 L794 110 L802 102 L806 114 Z" fill="#1c0f18"/>
+      </g>
+      <text x="784" y="178" font-size="18" fill="#fff4fb" text-anchor="middle">图片文件夹</text>
+    </g>
+    <text x="838" y="112" font-size="24" fill="#ff6fae" text-anchor="middle">→</text>
+    <g id="step-collage">
+      <rect x="852" y="62" width="88" height="88" rx="12" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/>
+      <g>
+        <rect x="872" y="82" width="16" height="16" rx="2" fill="#ff6fae"/><rect x="890" y="82" width="16" height="16" rx="2" fill="#ff9ec4"/><rect x="908" y="82" width="16" height="16" rx="2" fill="#d0b9c8"/>
+        <rect x="872" y="100" width="16" height="16" rx="2" fill="#ff9ec4"/><rect x="890" y="100" width="16" height="16" rx="2" fill="#ff6fae"/><rect x="908" y="100" width="16" height="16" rx="2" fill="#ff9ec4"/>
+        <rect x="872" y="118" width="16" height="16" rx="2" fill="#d0b9c8"/><rect x="890" y="118" width="16" height="16" rx="2" fill="#ff9ec4"/><rect x="908" y="118" width="16" height="16" rx="2" fill="#ff6fae"/>
+      </g>
+      <text x="896" y="178" font-size="18" fill="#fff4fb" text-anchor="middle">九宫格封面</text>
+    </g>
+    <text x="950" y="112" font-size="24" fill="#ff6fae" text-anchor="middle">→</text>
+    <g id="step-schedule">
+      <rect x="964" y="62" width="88" height="88" rx="12" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/>
+      <g stroke="#ff6fae" stroke-width="3" fill="none">
+        <circle cx="1008" cy="106" r="24"/>
+        <path d="M1008 94 L1008 106 L1018 112" stroke-linecap="round"/>
+      </g>
+      <text x="1008" y="178" font-size="18" fill="#fff4fb" text-anchor="middle">定时排期</text>
+    </g>
+    <text x="1062" y="112" font-size="24" fill="#ff6fae" text-anchor="middle">→</text>
+    <g id="step-publish">
+      <rect x="1076" y="62" width="88" height="88" rx="12" fill="#ff6fae"/>
+      <path d="M1098 106 L1114 122 L1142 92" stroke="#2a0b1b" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="1076" y="160" width="88" height="30" rx="8" fill="#1c0f18"/>
+      <text x="1120" y="178" font-size="18" fill="#fff4fb" text-anchor="middle">发布</text>
+    </g>
+    <g id="schedule-strip">
+      <rect x="740" y="206" width="424" height="64" rx="12" fill="#261722" stroke="#4a2b40" stroke-width="1.5"/>
+      <text x="764" y="236" font-size="19" fill="#fff4fb">首篇 12:00 · 间隔 2h · 跳过 23:00–07:00</text>
+      <text x="764" y="262" font-size="18" fill="#d0b9c8">发布前先预览完整计划，确认后才执行</text>
+    </g>
+  </g>
+</svg>

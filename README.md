@@ -1,153 +1,95 @@
-# 🚀 Auto XHS Publisher (小红书自动发布工具)
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Auto XHS Publisher — 小红书自动发布工具：图片文件夹 → 九宫格封面 → 定时排期 → 发布">
+</p>
 
-[English](#english) | [中文](#chinese)
+<p align="center">
+  <a href="https://xiaosang.cc/auto-xiao-hong-shu/">▶ 项目介绍页 Project Page</a>
+  ·
+  <a href="https://github.com/holynova/auto-xiao-hong-shu">GitHub 仓库</a>
+</p>
 
----
+小红书创作者助手（Playwright 驱动）：把一文件夹图片发成帖子——单帖，或按每 9 张自动拆成多篇；支持定时排期（首篇时间 + 间隔，跳过 23:00–07:00 低峰时段）；sharp 自动拼九宫格封面；首次扫码登录后 Cookie 存本地，后续免密发布；`--test` 模式只填内容不点发布。
 
-<a name="english"></a>
-## English
+A Xiaohongshu creator assistant driven by Playwright: turn a folder of images into posts — one post, or auto-split into many (9 images each by default). Schedule them (start time + interval, skipping the 23:00–07:00 low-traffic window), auto-generate a 3×3 collage cover with sharp, and publish hands-free after a one-time QR-code login (cookies persist locally). `--test` fills everything without clicking publish.
 
-A **Playwright**-based creator assistant for Xiaohongshu (Little Red Book). It supports single post publishing, bulk splitting of large directories, scheduled task management, and automatic collage cover generation.
+## 功能 / Features
 
-### ✨ Key Features
+- **两种发布模式**：单帖（文件夹内所有图片发为一篇）；批量分 P（按 `--chunk` 数量自动拆成多篇，默认 9 张/篇）。
+- **智能定时**：设首篇时间与间隔（默认 2 小时）；可跳过 23:00–07:00 凌晨低峰，顺延到次日早晨；发布前预览完整计划，确认后才执行。
+- **自动拼图封面**：用 sharp 抓前几张图拼九宫格做封面。
+- **反检测**：Stealth 插件 + 拟人滑块验证码轨迹；触发滑块时自动尝试滑动，失败可手动处理。
+- **Cookie 持久化**：首次手动扫码登录后，浏览器数据存本地（`.browser_data`），后续免密；也支持 `COOKIES_JSON` 环境变量注入。
+- **交互式向导**：`pnpm start` 按提示一步步配（中英双语界面，`--english` 强制英文；Mac 上可呼起文件夹选择框）。
+- **标题与正文来源**：命令行 `--title` / `--desc`，或目录内 `meta.json`（`title`、`content`、`tags` 字段），留空则用文件夹名做标题。
+- **测试模式**：`--test` 走完上传与填写，跳过真正的发布点击；发布失败自动保存页面截图便于排查。
 
-- 🤖 **Full Automation**: Automatically uploads images, fills in titles and descriptions, and clicks publish.
-- 📦 **Two Publishing Modes**:
-  - **Single Mode**: Publishes all images in a folder as one post.
-  - **Bulk Mode**: Automatically splits a folder with many images into multiple posts based on a set count (e.g., every 9 images).
-- ⏰ **Smart Scheduling System**:
-  - Set the start time for the first post and the interval between subsequent posts.
-  - **Night Mode Avoidance**: Configurable to stop publishing during low-traffic hours (23:00 - 07:00) and resume the next morning.
-- 🎨 **Auto Collage Cover**: Built-in `sharp` library to automatically grab the first few images and generate an attractive nine-grid collage as the cover.
-- 🕵️ **Anti-Detection**: Built-in Stealth mode and simulated human-like slider CAPTCHA trajectories.
-- 🍪 **Cookie Persistence**: Automatically saves cookies after the first manual login for future password-less automation.
+## 安装 / Install
 
-### 🛠️ Installation
+Node.js 16+，pnpm：
 
-1. **Prerequisites**: Ensure Node.js (v16+ recommended) is installed.
-2. **Clone and Install Dependencies**:
-   ```bash
-   pnpm install
-   ```
-3. **Initialize Browser Kernel**:
-   ```bash
-   pnpm exec playwright install chromium
-   ```
+```bash
+pnpm install
+pnpm exec playwright install chromium   # 仅需一次，初始化浏览器内核
+```
 
-### 🚀 Usage Guide
+## 使用 / Usage
 
-#### 1. Interactive Mode (Recommended)
-Simply run the script and follow the prompts. Perfect for beginners:
+交互模式（推荐）：
+
 ```bash
 pnpm start
 ```
 
-#### 2. Command Line Arguments
-For advanced users or automation:
+命令行模式：
+
 ```bash
-# Bulk split publishing
-node xhs_publisher.js --bulk-dir ./my_images --chunk 9 --title "Daily Share" --schedule-start "2026-04-05 12:00"
-
-# Enable collage mode and run a publishing test
-node xhs_publisher.js --dir ./travel_log --collage --test
-```
-
-### 📖 CLI Arguments Detail
-
-| Argument | Description |
-| :--- | :--- |
-| `-i, --interactive` | Enter interactive configuration mode (default). |
-| `--dir <path>` | Path to a single post folder. |
-| `--bulk-dir <path>` | Path to a bulk folder (auto-split). |
-| `--chunk <num>` | Number of images per post in bulk mode (default 9). |
-| `--title <text>` | Post title. |
-| `--desc <text>` | Post description. |
-| `--collage` | Enable automatic collage cover generation. |
-| `--schedule` | Enable scheduled publishing. |
-| `--schedule-start <time>` | Start time for the first post (YYYY-MM-DD HH:mm). |
-| `--schedule-interval <hr>` | Interval between posts in hours (default 2). |
-| `--skip-night` | Skip publishing during low-traffic hours (23:00-07:00). |
-| `--test` | Test mode: Fills content but skips the final publish button. |
-| `--english` | Force English interface. |
-| `-h, --help` | Display help information. |
-
-### 📄 Notes
-
-- **First Run**: A browser window will open; please manually scan the QR code to log in. Cookies will be saved locally for subsequent runs.
-- **CAPTCHA**: If a slider CAPTCHA is triggered, the script will attempt to simulate manual sliding. If it fails, please handle it manually in the console.
-- **Disclaimer**: This tool is for educational and research purposes only. Please comply with Xiaohongshu's platform agreements and control your publishing frequency reasonably.
-
----
-
-<a name="chinese"></a>
-## 中文
-
-一款基于 **Playwright** 开发的小红书创作者助手。支持单帖发布、大目录自动拆分批量发布、定时任务管理以及自动拼图封面生成。
-
-### ✨ 核心特性
-
-- 🤖 **全自动流程**：自动上传图片、填写标题、正文，并支持自动点击发布。
-- 📦 **两种发布模式**：
-  - **Single Mode**: 一个文件夹内的所有图片发布为一个帖子。
-  - **Bulk Mode**: 将包含大量图片的文件夹按设定数量（如每 9 张）自动拆分为多篇帖子。
-- ⏰ **智能定时系统**：
-  - 支持设置首篇发布时间及发布间隔。
-  - **深夜自动避让**：可配置在凌晨 (23:00 - 07:00) 自动停止发布，并顺延至次日早晨。
-- 🎨 **自动拼图封面**：内置 `sharp` 库，可自动抓取前几张图片生成精美的九宫格拼图作为封面。
-- 🕵️ **反检测增强**：内置 Stealth 模式和真实人类滑动验证码轨迹模拟。
-- 🍪 **Cookie 持久化**：首次手动登录后自动保存 Cookie，后续实现全自动免密发布。
-
-### 🛠️ 安装步骤
-
-1. **环境依赖**：确保已安装 Node.js (推荐 v16+)。
-2. **克隆并安装依赖**：
-   ```bash
-   pnpm install
-   ```
-3. **初始化浏览器内核**：
-   ```bash
-   pnpm exec playwright install chromium
-   ```
-
-### 🚀 使用指南
-
-#### 1. 交互模式 (推荐)
-直接运行脚本，按照提示输入即可，非常适合新手：
-```bash
-pnpm start
-```
-
-#### 2. 命令行参数模式
-适合进阶用户或脚本自动化调用：
-```bash
-# 批量拆分发布
+# 批量拆分 + 定时
 node xhs_publisher.js --bulk-dir ./my_images --chunk 9 --title "每日分享" --schedule-start "2026-04-05 12:00"
 
-# 开启拼图模式并进行发布测试
+# 拼图封面 + 测试模式（不真发）
 node xhs_publisher.js --dir ./travel_log --collage --test
 ```
 
-### 📖 命令行参数详解
+| 参数 | 说明 |
+|---|---|
+| `-i, --interactive` | 交互式配置模式（默认） |
+| `--dir <路径>` | 单帖文件夹 |
+| `--bulk-dir <路径>` | 批量文件夹（自动拆分） |
+| `--chunk <数量>` | 批量模式每篇图片数（默认 9） |
+| `--title <文本>` | 帖子标题 |
+| `--desc <文本>` | 帖子正文 |
+| `--collage` | 开启自动拼图封面 |
+| `--schedule` | 开启定时发布 |
+| `--schedule-start <时间>` | 首篇发布时间（`YYYY-MM-DD HH:mm`） |
+| `--schedule-interval <小时>` | 发布间隔（默认 2） |
+| `--skip-night` | 跳过 23:00–07:00 低峰时段 |
+| `--test` | 测试模式：填写内容，不点发布 |
+| `--english` | 强制英文界面 |
+| `-h, --help` | 显示帮助 |
 
-| 参数名 | 说明 |
-| :--- | :--- |
-| `-i, --interactive` | 进入交互式配置模式（默认）。 |
-| `--dir <path>` | 指定单个帖子文件夹路径。 |
-| `--bulk-dir <path>` | 指定批量文件夹路径（自动拆分）。 |
-| `--chunk <num>` | 批量模式下每篇帖子的图片数量（默认 9）。 |
-| `--title <text>` | 帖子标题。 |
-| `--desc <text>` | 帖子正文描述。 |
-| `--collage` | 开启自动生成拼图封面。 |
-| `--schedule` | 开启定时发布。 |
-| `--schedule-start <time>` | 首篇发布时间格式 (YYYY-MM-DD HH:mm)。 |
-| `--schedule-interval <hr>` | 发布间隔小时数 (默认 2)。 |
-| `--skip-night` | 是否避开发布低峰期 (23:00-07:00)。 |
-| `--test` | 测试模式：自动填写内容但不点击最终发布按钮。 |
-| `--english` | 强制使用英语界面。 |
-| `-h, --help` | 显示帮助信息。 |
+## 技术 / Tech
 
-### 📄 注意事项
+- 单文件脚本 `xhs_publisher.js`（约 48KB），依赖：`playwright` + `playwright-extra` + `puppeteer-extra-plugin-stealth`（浏览器自动化与反检测）、`sharp`（拼图）、`enquirer`（交互式提问）、`dotenv`（环境变量）。
+- 登录态：Playwright 持久化上下文（`.browser_data`）；GitHub Actions 环境下自动 headless。
 
-- **首次运行**：会自动打开浏览器窗口，请手动扫描小红书二维码登录。登录成功后，Cookie 将保存在本地，下次运行无需手动登录。
-- **验证码**：如果触发滑块验证码，脚本会尝试模拟人工滑动。如果自动滑动失败，请在控制台中手动操作。
-- **免责声明**：本工具仅供学习和研究使用，请遵守小红书平台相关协议，合理控制发布频率。
+```
+xhs_publisher.js   全部逻辑：参数解析 / 交互向导 / 拼图 / 发布 / 定时
+package.json       pnpm start 即 node xhs_publisher.js
+```
+
+## English
+
+**Auto XHS Publisher** is a Playwright-driven assistant for posting to Xiaohongshu (Little Red Book) from the command line.
+
+- **Two modes**: single post (whole folder → one post) or bulk split (auto-chunked, 9 images per post by default).
+- **Smart scheduling**: set the first post's time and an interval (default 2h); optionally skip the 23:00–07:00 low-traffic window. A full plan preview is shown for confirmation before anything runs.
+- **Collage cover**: sharp stitches the first images into a 3×3 grid cover.
+- **Anti-detection**: Stealth plugin plus human-like slider-CAPTCHA trajectories; falls back to manual handling if auto-slide fails.
+- **Login once**: QR-code login on first run, cookies persist locally (`.browser_data`); or inject via the `COOKIES_JSON` env var.
+- **Titles & copy**: from `--title` / `--desc` flags, or a `meta.json` in the folder (`title`, `content`, `tags`); falls back to the folder name.
+- **Test mode**: `--test` uploads and fills everything but never clicks publish; failures save a page screenshot for debugging.
+- **Install**: Node.js 16+, `pnpm install`, then `pnpm exec playwright install chromium` (once). Run `pnpm start` for the interactive wizard (bilingual, `--english` forces English).
+
+## 免责声明 / Disclaimer
+
+本工具仅供学习与研究使用，请遵守小红书平台相关协议，合理控制发布频率。For educational and research purposes only; please follow Xiaohongshu's platform terms and keep posting frequency reasonable.
